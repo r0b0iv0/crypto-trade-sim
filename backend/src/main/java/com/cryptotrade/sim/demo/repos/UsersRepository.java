@@ -19,7 +19,7 @@ public class UsersRepository {
     }
 
     public List<User> getAllUsersList() {
-        String sql = "SELECT * FROM users";
+        String sql = "SELECT id, name, balance FROM users";
         return jdbcTemplate.query(sql, new UserRowMapper());
     }
 }

@@ -9,7 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.net.URI;
 import java.util.Arrays;
-// import java.net.http.HttpHeaders;
+
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -28,7 +28,7 @@ public class KrakenWebSocketClient extends WebSocketClient {
         JSONObject subscriptionMessage = new JSONObject();
         subscriptionMessage.put("event", "subscribe");
         subscriptionMessage.put("pair", new JSONArray(Arrays.asList("BTC/USD", "ETH/USD", "USDT/USD", "XRP/USD", "SOL/USD", "USDC/USD", "DOGE/USD", "ADA/USD", "TRX/USD", "WBTC/USD",  
-"DOT/USD", "LTC/USD", "LINK/USD", "XLM/USD", "UNI/USD", "BNB/USD", "AVAX/USD", "SHIB/USD", "MATIC/USD", "ATOM/USD"))); 
+"DOT/USD", "LTC/USD", "LINK/USD", "XLM/USD", "UNI/USD", "AVAX/USD", "SHIB/USD", "SUI/USD", "ATOM/USD"))); 
         
 
 
@@ -38,7 +38,6 @@ public class KrakenWebSocketClient extends WebSocketClient {
         subscriptionMessage.put("subscription", subscriptionDetails);
 
         this.send(subscriptionMessage.toString());
-        System.out.println("Sent subscription request: " + subscriptionMessage.toString());
     }
 
     @Override
@@ -48,12 +47,13 @@ public class KrakenWebSocketClient extends WebSocketClient {
             if (message.startsWith("[")) {
                 JSONArray responseArray = new JSONArray(message);
                     String tradingPair = responseArray.getString(3);
+                    String formatedCurrencyName = tradingPair.substring(0, tradingPair.length()-4);
 
                     JSONObject tickerData = responseArray.getJSONObject(1);
                     JSONArray lastTrade = tickerData.getJSONArray("c");
                     String latestPrice = lastTrade.getString(0);
-                    System.out.println("The price of " + tradingPair + " is: " + latestPrice);
-                    String jsonResponse = "{\"pair\": \"" + tradingPair + "\", \"price\": \"" + latestPrice + "\"}";
+                    // System.out.println("The price of " + formatedCurrencyName + " is: " + latestPrice);
+                    String jsonResponse = "{\"symbol\": \"" + formatedCurrencyName + "\", \"price\": \"" + latestPrice + "\"}";
 
                 for (WebSocketSession session : sessions) {
                     if (session.isOpen()) {
@@ -64,7 +64,6 @@ public class KrakenWebSocketClient extends WebSocketClient {
             } else {
                 JSONObject jsonResponse = new JSONObject(message);
                 if (jsonResponse.has("event") && jsonResponse.getString("event").equals("subscriptionStatus")) {
-                    System.out.println("Subscription successful: " + jsonResponse.toString());
                 }
             }
 

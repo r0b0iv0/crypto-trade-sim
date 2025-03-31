@@ -1,0 +1,22 @@
+export const cryptoIconMap: Record<string, string> = {
+    XBT: "bitcoin-btc",
+    ETH: "ethereum-eth",
+    USDT: "tether-usdt",
+    XRP: "xrp-xrp",
+    SOL: "solana-sol",
+    USDC: "usd-coin-usdc",
+    XDG: "dogecoin-doge",
+    ADA: "cardano-ada",
+    TRX: "tron-trx",
+    WBTC: "wrapped-bitcoin-wbtc",
+    DOT: "polkadot-new-dot",
+    LTC: "litecoin-ltc",
+    LINK: "chainlink-link",
+    XLM: "stellar-xlm",
+    UNI: "uniswap-uni",
+    AVAX: "avalanche-avax",
+    SHIB: "shiba-inu-shib",
+    MATIC: "polygon-matic",
+    ATOM: "cosmos-atom",
+    SUI: "sui-sui"
+  };

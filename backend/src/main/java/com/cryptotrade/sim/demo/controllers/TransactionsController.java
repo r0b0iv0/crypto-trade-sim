@@ -2,6 +2,7 @@ package com.cryptotrade.sim.demo.controllers;
 
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cryptotrade.sim.demo.repos.TransactionsRepository;
@@ -15,8 +16,8 @@ public class TransactionsController {
         this.transactionsRepository = transactionsRepository;
     }
 
-    @GetMapping("/transactions")
-    public List<Transaction> getAllUsersList() {
-        return transactionsRepository.getAllUserTransactions(1);
+    @GetMapping("/transactions/{id}")
+    public List<Transaction> getAllUsersList(@PathVariable int id) {
+        return transactionsRepository.getAllUserTransactions(id);
     }
 }

@@ -16,10 +16,10 @@ import lombok.Setter;
 
 public class Transaction {
     private int id;
-    private String transactionType;
-    private String cryptoName;
-    private BigDecimal cryptoAmount;
+    private String transaction_type;
+    private String crypto_name;
+    private BigDecimal crypto_amount;
     private String currency;
-    private BigDecimal currencyAmount;
+    private BigDecimal currency_amount;
     private Timestamp timestamp;
 }

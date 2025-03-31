@@ -21,7 +21,7 @@ public class TransactionsRepository {
 
     public List<Transaction> getAllUserTransactions(int id) {
         String sql = String.format("SELECT id, transaction_type, crypto_name, crypto_amount," +
-         "currency, currency_amount, timestamp FROM users WHERE user_id = %d", id);
+         "currency, currency_amount, timestamp FROM transactions WHERE user_id = %d", id);
         return jdbcTemplate.query(sql, new TransactionRowMapper());
     }
 }

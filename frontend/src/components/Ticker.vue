@@ -64,12 +64,10 @@ const krakenApiGetPrices = async () => {
   symbol,
   price: price.toString(),
 }));
-    console.log(cryptoList.value)
     cryptoList.value.map((elem) =>{
       elem.icon = `https://cryptologos.cc/logos/${cryptoIconMap[elem.symbol]}-logo.png`
     })
   } catch (e) {
-    console.log(e)
   }
 }
 
@@ -141,8 +139,11 @@ const sellCrypto = async (crypto: TickerData) => {
     });
 
     emit("refreshNavbar");
-    alert(`You sold ${crypto.cryptoAmount || '0'} ${crypto.symbol}`);
-  } catch (error) {
+    alert(response.data);
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      alert(error.response?.data);
+    } else alert("Unexpected error");
     
   }
 };

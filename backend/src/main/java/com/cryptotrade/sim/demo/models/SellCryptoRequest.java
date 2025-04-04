@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class SellCryptoRequest {
+    private int userId;
     private String cryptoSymbol;
     private BigDecimal amount;
     private BigDecimal usdPrice;

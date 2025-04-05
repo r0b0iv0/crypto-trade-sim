@@ -1,3 +1,11 @@
+# Crypto Trade Sim
+
+
+
+
+https://github.com/user-attachments/assets/089e5099-3360-4ae5-8bb8-ec7a7983bfc0
+
+
 # How To Run:
 
 ## Prerequisites

@@ -1,5 +1,5 @@
 # Crypto Trade Sim
-
+### Crypto Trade Simulator with real time price updates from Kraken API
 
 
 

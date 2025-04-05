@@ -10,31 +10,33 @@ import org.springframework.stereotype.Repository;
 import com.cryptotrade.sim.demo.enums.TransactionType;
 import com.cryptotrade.sim.demo.helpers.Validator;
 import com.cryptotrade.sim.demo.models.UserPortfolio;
-import com.cryptotrade.sim.demo.services.UserRepositoryService;
+import com.cryptotrade.sim.demo.services.UserRepositoryService;;
 
 @Repository
 public class UsersRepository {
     private final JdbcTemplate jdbcTemplate;
     private TransactionsRepository transactionsRepository;
     private UserRepositoryService userRepositoryService;
-    private Validator validator;
 
-    public UsersRepository(JdbcTemplate jdbcTemplate, TransactionsRepository transactionsRepository) {
+    public UsersRepository(JdbcTemplate jdbcTemplate, TransactionsRepository transactionsRepository, UserRepositoryService userRepositoryService) {
         this.transactionsRepository = transactionsRepository;
+        this.userRepositoryService = userRepositoryService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public String userBuysCrypto(int userId, String cryptoSymbol, BigDecimal cryptoAmount, BigDecimal cost) {
+    public String userBuysCrypto(int userId, String cryptoSymbol, BigDecimal cryptoAmount, BigDecimal pricePerOne) {
 
-        validator.checkIfBigDecimal(cryptoAmount, "Invalid value of " + cryptoSymbol + " amount ");
-        validator.checkIfBigDecimal(cost, "Invalid value of price");
+        Validator.checkIfBigDecimal(cryptoAmount, "Invalid value of " + cryptoSymbol + " amount ");
+        Validator.checkIfBigDecimal(pricePerOne, "Invalid value of price");
 
         BigDecimal userBalance = userRepositoryService.getUserBalance(userId);
+
+        BigDecimal totalValue = cryptoAmount.multiply(pricePerOne);
 
         if (userBalance == null) {
             throw new RuntimeException("User not found.");
         }
-        if (userBalance.compareTo(cost) < 0) {
+        if (userBalance.compareTo(totalValue) < 0) {
             throw new RuntimeException("Insufficient balance.");
         }
 
@@ -47,22 +49,22 @@ public class UsersRepository {
 
         userRepositoryService.updateCryptoHolding(userId, cryptoSymbol, cryptoAmount);
 
-        userRepositoryService.updateUserBalance(userId, cost, TransactionType.BUY);
+        userRepositoryService.updateUserBalance(userId, totalValue, TransactionType.BUY);
 
-        transactionsRepository.recordTransaction(userId, "BUY", cryptoSymbol, cryptoAmount, cost);
+        transactionsRepository.recordTransaction(userId, "BUY", cryptoSymbol, cryptoAmount, pricePerOne);
 
         return String.format(
                 "Bought %s %s for $%.2f. New balance: $%.2f",
-                cryptoAmount, cryptoSymbol, cost,
+                cryptoAmount, cryptoSymbol, totalValue,
                 userRepositoryService.getUserBalance(userId));
     }
 
-    public String sellCrypto(int userId, String cryptoSymbol, BigDecimal cryptoAmount, BigDecimal usdPrice) {
+    public String sellCrypto(int userId, String cryptoSymbol, BigDecimal cryptoAmount, BigDecimal pricePerOne) {
 
-        validator.checkIfBigDecimal(cryptoAmount, "Invalid value of " + cryptoSymbol + " amount ");
-        validator.checkIfBigDecimal(usdPrice, "Invalid value of price");
+        Validator.checkIfBigDecimal(cryptoAmount, "Invalid value of " + cryptoSymbol + " amount ");
+        Validator.checkIfBigDecimal(pricePerOne, "Invalid value of price");
 
-        BigDecimal totalValue = cryptoAmount.multiply(usdPrice);
+        BigDecimal totalValue = cryptoAmount.multiply(pricePerOne);
 
         BigDecimal currentHolding = userRepositoryService.getCryptoHolding(userId, cryptoSymbol);
         if (currentHolding.compareTo(cryptoAmount) < 0) {
@@ -73,7 +75,7 @@ public class UsersRepository {
 
         userRepositoryService.updateUserBalance(userId, totalValue, TransactionType.SELL);
 
-        transactionsRepository.recordTransaction(userId, "SELL", cryptoSymbol, cryptoAmount, usdPrice);
+        transactionsRepository.recordTransaction(userId, "SELL", cryptoSymbol, cryptoAmount, pricePerOne);
 
         return String.format(
                 "Sold %s %s for $%.2f. New balance: $%.2f",

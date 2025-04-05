@@ -1,5 +1,6 @@
 package com.cryptotrade.sim.demo.repos;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -23,6 +24,17 @@ public class TransactionsRepository {
         String sql = String.format("SELECT id, transaction_type, crypto_name, crypto_amount," +
          "currency, currency_amount, timestamp FROM transactions WHERE user_id = %d", id);
         return jdbcTemplate.query(sql, new TransactionRowMapper());
+    }
+
+    public void recordTransaction(int userId, String type, String symbol, 
+                                 BigDecimal cryptoAmount, BigDecimal usdPrice) {
+        jdbcTemplate.update(
+            "INSERT INTO transactions (user_id, transaction_type, crypto_name, " +
+            "crypto_amount, currency, currency_amount) " +
+            "VALUES (?, ?, ?, ?, 'USD', ?)",
+            userId, type, symbol, cryptoAmount, 
+            cryptoAmount.multiply(usdPrice)
+        );
     }
 }
 

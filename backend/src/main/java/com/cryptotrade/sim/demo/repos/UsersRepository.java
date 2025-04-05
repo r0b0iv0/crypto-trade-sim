@@ -4,13 +4,16 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import com.cryptotrade.sim.demo.enums.TransactionType;
 import com.cryptotrade.sim.demo.models.User;
+import com.cryptotrade.sim.demo.models.UserPortfolio;
 
 @Repository
 public class UsersRepository {
@@ -33,9 +36,17 @@ public class UsersRepository {
 
     }
 
-    public void userBuysCrypto(int userId, String cryptoSymbol, BigDecimal cryptoAmount, BigDecimal cost) {
+    public String userBuysCrypto(int userId, String cryptoSymbol, BigDecimal cryptoAmount, BigDecimal cost) {
 
         BigDecimal userBalance = getUserBalance(userId);
+
+        if (!(cryptoAmount instanceof BigDecimal) || cryptoAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid value of " + cryptoSymbol + " amount ");
+        }
+
+        if (!(cost instanceof BigDecimal) || cost.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid value of price");
+        }
 
         if (userBalance == null) {
             throw new RuntimeException("User not found.");
@@ -50,33 +61,28 @@ public class UsersRepository {
         if (cryptoId == null) {
             throw new RuntimeException("Cryptocurrency not found.");
         }
-        BigDecimal currentCryptoAmount = null;
-        try {
 
-            String holdingsQuery = "SELECT amount FROM user_crypto_holdings WHERE user_id = ? AND crypto_id = ?";
-            currentCryptoAmount = jdbcTemplate.queryForObject(holdingsQuery, BigDecimal.class, userId, cryptoId);
-        } catch (Exception e) {
-            System.out.println("User don't have this crypto " + e);
-        }
+        updateCryptoHolding(userId, cryptoSymbol, cryptoAmount);
 
-        if (currentCryptoAmount == null) {
-
-            String insertHoldingQuery = "INSERT INTO user_crypto_holdings (user_id, crypto_id, amount) VALUES (?, ?, ?)";
-            jdbcTemplate.update(insertHoldingQuery, userId, cryptoId, cryptoAmount);
-        } else {
-
-            String updateHoldingQuery = "UPDATE user_crypto_holdings SET amount = amount + ? WHERE user_id = ? AND crypto_id = ?";
-            jdbcTemplate.update(updateHoldingQuery, cryptoAmount, userId, cryptoId);
-        }
-
-        updateUserBalance(userId, cost);
+        updateUserBalance(userId, cost, TransactionType.BUY);
 
         transactionsRepository.recordTransaction(userId, "BUY", cryptoSymbol, cryptoAmount, cost);
 
-        System.out.println("Succesfull");
+        return String.format(
+                "Bought %s %s for $%.2f. New balance: $%.2f",
+                cryptoAmount, cryptoSymbol, cost,
+                getUserBalance(userId));
     }
 
     public String sellCrypto(int userId, String cryptoSymbol, BigDecimal cryptoAmount, BigDecimal usdPrice) {
+
+        if (!(cryptoAmount instanceof BigDecimal) || cryptoAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid value of " + cryptoSymbol + " amount ");
+        }
+
+        if (!(usdPrice instanceof BigDecimal) || usdPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid value of price");
+        }
 
         BigDecimal totalValue = cryptoAmount.multiply(usdPrice);
 
@@ -87,7 +93,7 @@ public class UsersRepository {
 
         updateCryptoHolding(userId, cryptoSymbol, cryptoAmount.negate());
 
-        updateUserBalance(userId, totalValue);
+        updateUserBalance(userId, totalValue, TransactionType.SELL);
 
         transactionsRepository.recordTransaction(userId, "SELL", cryptoSymbol, cryptoAmount, usdPrice);
 
@@ -137,11 +143,61 @@ public class UsersRepository {
                 BigDecimal.class, userId);
     }
 
-    private void updateUserBalance(int userId, BigDecimal totalValue) {
-        jdbcTemplate.update(
-                "UPDATE users SET balance = balance + ? WHERE id = ?",
-                totalValue, userId);
+    private void updateUserBalance(int userId, BigDecimal totalValue, TransactionType type) {
+        String sql;
+        if (type.equals(TransactionType.BUY)) {
+
+             sql =   "UPDATE users SET balance = balance - ? WHERE id = ?";
+
+        }
+        else if (type.equals(TransactionType.SELL)) {
+             sql =   "UPDATE users SET balance = balance + ? WHERE id = ?";
+        } else {
+            throw new IllegalArgumentException("Unsupported transaction type: " + type);
+        }
+
+        int rowsUpdated = jdbcTemplate.update(
+            sql,
+            totalValue, userId);
+
+            if (rowsUpdated == 0) {
+                throw new RuntimeException("Insufficent balance or user not found");
+            }
+        
+       
     }
+
+    public UserPortfolio getUserPortfolio(int userId) {
+    String sql = """
+        SELECT u.name, u.balance, c.symbol, h.amount
+        FROM users u
+        LEFT JOIN user_crypto_holdings h ON u.id = h.user_id
+        LEFT JOIN cryptocurrencies c ON h.crypto_id = c.id
+        WHERE u.id = ?
+    """;
+
+    List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, userId);
+
+    if (rows.isEmpty()) {
+        throw new RuntimeException("User not found: ");
+    }
+
+    UserPortfolio portfolio = new UserPortfolio();
+    for (Map<String, Object> row : rows) {
+        if (portfolio.getName() == null) {
+            portfolio.setName((String) row.get("name"));
+            portfolio.setBalance((BigDecimal) row.get("balance"));
+        }
+        String symbol = (String) row.get("symbol");
+        BigDecimal amount = (BigDecimal) row.get("amount");
+        if (symbol != null && amount != null) {
+            portfolio.getHoldings().add(new UserPortfolio.Holding(symbol, amount));
+        }
+    }
+
+    return portfolio;
+}
+
 
     public void resetUserData(int userId) {
         String deleteTransactions = "DELETE FROM transactions WHERE user_id = ?";

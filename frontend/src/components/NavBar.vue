@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, provide } from 'vue';
+import axios from 'axios';
 
 interface User {
     name: string;
     balance: number;
+    holdings: [{cryptoSymbol: string, amount: number}]
 }
 
 const user = ref<User | null>(null);
@@ -11,8 +13,8 @@ const message = ref("");
 
 const fetchUserData = async () => {
     try {
-        const response = await fetch("http://localhost:8080/user/1");
-        user.value = await response.json();
+        const response = await axios.get("http://localhost:8080/user/1");
+        user.value = response.data;
     } catch (error) {
         console.error("Error fetching user data:", error);
     }
@@ -40,8 +42,10 @@ onMounted(fetchUserData);
             <router-link to="/history" class="nav-item">History</router-link>
         </div>
         <div class="nav-right" v-if="user">
-            <span class="user-info"> {{ user.name }}</span>
-            <span class="user-info">$ {{ user.balance.toFixed(2) }} USD</span>
+          <span class="user-info">|</span>
+            <span class="user-info"> 👤 {{ user.name }}</span>
+            <span class="user-info"> 💰 {{ user.balance.toFixed(2) }} USD</span>
+            <span v-for="crypto in user.holdings" class="user-info">{{ crypto.cryptoSymbol }}:{{ crypto.amount }}</span>
             <button @click="resetUserData" class="reset-btn">Reset</button>
         </div>
     </nav>
@@ -61,12 +65,12 @@ onMounted(fetchUserData);
   padding: 0 20px;
   color: white;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: scroll;
   z-index: 1000;
 }
 
 .nav-left {
   display: flex;
-  gap: 20px;
 }
 
 .nav-item {
@@ -74,9 +78,9 @@ onMounted(fetchUserData);
   color: white;
   font-size: 18px;
   font-weight: bold;
+  margin-right: 20px;
   transition: opacity 0.3s ease-in-out;
 }
-/* tuk */
 .nav-item:hover {
   opacity: 0.7;
 }

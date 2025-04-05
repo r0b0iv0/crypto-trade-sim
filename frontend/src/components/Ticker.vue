@@ -102,31 +102,34 @@ const updateUsdAmount = (index: number, cryptoValue: string) => {
 const message = ref<string>('');
   const emit = defineEmits(["refreshNavbar"]);
 
-const buyCrypto = async (cryptoSymbol: string, cryptoAmount: string, cryptoUsdAmount: string) => {
+const buyCrypto = async (crypto: TickerData) => {
+  if (!crypto.cryptoAmount || parseFloat(crypto.cryptoAmount) <= 0) {
+    alert("Please enter a valid amount of " + crypto.symbol);
+    return;
+  }
   const buyRequest = ref<BuyCryptoRequest>({
   userId: 1, 
-  cryptoSymbol: cryptoSymbol,
-  cryptoAmount: Number(cryptoAmount),
-  price: Number(cryptoUsdAmount)
+  cryptoSymbol: crypto.symbol,
+  cryptoAmount: Number(crypto.cryptoAmount),
+  price: Number(crypto.price)
 });
   try {
     const response = await axios.post('http://localhost:8080/buy', buyRequest.value);
     message.value = response.data;
-  } catch (error) {
-    message.value = 'Failed to process purchase.';
+    alert(response.data);
+    emit("refreshNavbar");
+  } catch (error: unknown) {
+    if(axios.isAxiosError(error)) {
+      alert(error.response?.data)
+    } else alert("Unexpected error")
   }
-  emit("refreshNavbar");
-  alert(`You bought ${cryptoAmount || '0'} ${cryptoSymbol}`);
-};
-
-type CryptoCard = TickerData & {
-  usdAmount: string;
-  cryptoAmount: string;
+  
+  
 };
 
 const sellCrypto = async (crypto: TickerData) => {
   if (!crypto.cryptoAmount || parseFloat(crypto.cryptoAmount) <= 0) {
-    alert("Please enter a valid amount");
+    alert("Please enter a valid amount of " + crypto.symbol);
     return;
   }
 
@@ -189,11 +192,10 @@ onMounted(() => {
             />
           </div>
           
-          <button @click="buyCrypto(crypto.symbol, crypto.cryptoAmount!, crypto.usdAmount!)" class="buy-button">Buy Now</button>
+          <button @click="buyCrypto(crypto)" class="buy-button">Buy Now</button>
           <button 
       @click="sellCrypto(crypto)" 
       class="buy-button"
-      :disabled="!crypto.cryptoAmount || parseFloat(crypto.cryptoAmount) <= 0"
     >
       Sell Now
     </button>
@@ -270,7 +272,7 @@ h1 {
   font-size: 1.1rem;
   font-weight: bold;
   color: #4CAF50;
-  margin: 5px 0 0;
+  margin: 5px 10px 0 0;
 }
 
 .converter {

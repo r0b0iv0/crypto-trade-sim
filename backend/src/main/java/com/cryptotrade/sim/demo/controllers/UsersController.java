@@ -13,6 +13,7 @@ import com.cryptotrade.sim.demo.repos.UsersRepository;
 import com.cryptotrade.sim.demo.models.BuyCryptoRequest;
 import com.cryptotrade.sim.demo.models.SellCryptoRequest;
 import com.cryptotrade.sim.demo.models.User;
+import com.cryptotrade.sim.demo.models.UserPortfolio;
 
 @RestController
 public class UsersController {
@@ -28,18 +29,17 @@ public class UsersController {
     }
 
     @GetMapping("/user/{userId}")
-    public User getSingleUser(@PathVariable int userId) {
-        return usersRepository.getSingleUser(userId);
+    public UserPortfolio getSingleUser(@PathVariable int userId) {
+        return usersRepository.getUserPortfolio(userId);
     }
 
     @PostMapping("/buy")
     public ResponseEntity<String> buyCrypto(@RequestBody BuyCryptoRequest request) {
         try {
-            usersRepository.userBuysCrypto(request.getUserId(), request.getCryptoSymbol(), request.getCryptoAmount(),
-                    request.getPrice());
-            return ResponseEntity.ok("Purchase successful!");
+            return ResponseEntity.ok(usersRepository.userBuysCrypto(request.getUserId(), request.getCryptoSymbol(),
+                    request.getCryptoAmount(),
+                    request.getPrice()));
         } catch (Exception e) {
-            System.out.println(e.getMessage());
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
 
         }

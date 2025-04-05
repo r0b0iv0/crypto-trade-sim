@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cryptotrade.sim.demo.repos.UsersRepository;
 import com.cryptotrade.sim.demo.models.BuyCryptoRequest;
 import com.cryptotrade.sim.demo.models.SellCryptoRequest;
-import com.cryptotrade.sim.demo.models.User;
 import com.cryptotrade.sim.demo.models.UserPortfolio;
 
 @RestController
@@ -23,13 +22,8 @@ public class UsersController {
         this.usersRepository = usersRepository;
     }
 
-    @GetMapping("/users")
-    public List<User> getAllUsersList() {
-        return usersRepository.getAllUsersList();
-    }
-
     @GetMapping("/user/{userId}")
-    public UserPortfolio getSingleUser(@PathVariable int userId) {
+    public UserPortfolio getUserPortfolio(@PathVariable int userId) {
         return usersRepository.getUserPortfolio(userId);
     }
 

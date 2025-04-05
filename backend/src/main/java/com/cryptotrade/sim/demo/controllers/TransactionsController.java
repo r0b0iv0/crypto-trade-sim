@@ -17,7 +17,7 @@ public class TransactionsController {
     }
 
     @GetMapping("/transactions/{id}")
-    public List<Transaction> getAllUsersList(@PathVariable int id) {
+    public List<Transaction> getAllUserTransactions(@PathVariable int id) {
         return transactionsRepository.getAllUserTransactions(id);
     }
 }

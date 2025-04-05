@@ -52,7 +52,6 @@ public class KrakenWebSocketClient extends WebSocketClient {
                     JSONObject tickerData = responseArray.getJSONObject(1);
                     JSONArray lastTrade = tickerData.getJSONArray("c");
                     String latestPrice = lastTrade.getString(0);
-                    // System.out.println("The price of " + formatedCurrencyName + " is: " + latestPrice);
                     String jsonResponse = "{\"symbol\": \"" + formatedCurrencyName + "\", \"price\": \"" + latestPrice + "\"}";
 
                 for (WebSocketSession session : sessions) {
